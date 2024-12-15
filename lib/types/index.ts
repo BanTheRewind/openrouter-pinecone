@@ -58,10 +58,8 @@ export interface DocumentChunk {
   content: string
   metadata: {
     pageNumber: number
-    location?: {
-      startOffset: number
-      endOffset: number
-    }
+    startOffset: number
+    endOffset: number
   }
   embedding?: number[]
 }

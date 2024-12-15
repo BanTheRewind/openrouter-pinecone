@@ -101,6 +101,9 @@ dependencies:
   pdf-parse:
     specifier: ^1.1.1
     version: 1.1.1
+  pdf2json:
+    specifier: ^3.1.4
+    version: 3.1.4
   react:
     specifier: 18.3.1
     version: 18.3.1
@@ -151,6 +154,9 @@ devDependencies:
   '@types/node':
     specifier: 20.14.9
     version: 20.14.9
+  '@types/pdf-parse':
+    specifier: ^1.1.4
+    version: 1.1.4
   '@types/react':
     specifier: 18.3.3
     version: 18.3.3
@@ -1438,6 +1444,10 @@ packages:
     resolution: {integrity: sha512-06OCtnTXtWOZBJlRApleWndH4JsRVs1pDCc8dLSQp+7PpUpX3ePdHyeNSFTeSe7FtKyQkrlPvHwJOW3SLd8Oyg==}
     dependencies:
       undici-types: 5.26.5
+
+  /@types/pdf-parse@1.1.4:
+    resolution: {integrity: sha512-+gbBHbNCVGGYw1S9lAIIvrHW47UYOhMIFUsJcMkMrzy1Jf0vulBN3XQIjPgnoOXveMuHnF3b57fXROnY/Or7eg==}
+    dev: true
 
   /@types/prop-types@15.7.12:
     resolution: {integrity: sha512-5zvhXYtRNRluoE/jAp4GVsSduVUzNWKkOZrCDBWYtE7biZywwdC2AcEzg+cSMLFRfVgeAFqpfNabiPjxFddV1Q==}
@@ -4719,6 +4729,14 @@ packages:
     transitivePeerDependencies:
       - supports-color
     dev: false
+
+  /pdf2json@3.1.4:
+    resolution: {integrity: sha512-rS+VapXpXZr+5lUpHmRh3ugXdFXp24p1RyG24yP1DMpqP4t0mrYNGpLtpSbWD42PnQ59GIXofxF+yWb7M+3THg==}
+    engines: {node: '>=18.12.1', npm: '>=8.19.2'}
+    hasBin: true
+    dev: false
+    bundledDependencies:
+      - '@xmldom/xmldom'
 
   /periscopic@3.1.0:
     resolution: {integrity: sha512-vKiQ8RRtkl9P+r/+oefh25C3fhybptkHKCZSPlcXiJux2tJF55GnEj3BVn4A5gKfq9NWWXXrxkHBwVPUfH0opw==}

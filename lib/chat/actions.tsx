@@ -18,6 +18,12 @@ import { saveChat } from '@/app/actions'
 import { Chat, Message } from '@/lib/types'
 import { auth } from '@/auth'
 import { APICallError, CoreMessage } from 'ai'
+import { searchDocuments } from '@/lib/pinecone/document-service'
+import { OpenAI } from 'openai'
+
+const openai = new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY
+})
 
 export function SystemMessage({ children }: { children: React.ReactNode }) {
   return (
@@ -87,6 +93,18 @@ async function submitUserMessage(
 
   const aiState = getMutableAIState<typeof AI>()
 
+  // Get relevant context from Pinecone
+  const context = await searchDocuments(content)
+  const contextText = context
+    .map(
+      result =>
+        `Context (score ${result.score?.toFixed(2)}): ${result.metadata.text}`
+    )
+    .join('\n\n')
+
+  // Enhance system message with context
+  const enhancedSystemMessage = `${systemMessage}\n\nRelevant document context:\n${contextText}`
+
   const prevConversation = aiState.get().messages
   const userMessage = {
     id: nanoid(),
@@ -111,7 +129,7 @@ async function submitUserMessage(
   const messages = [
     {
       role: 'system',
-      content: systemMessage
+      content: enhancedSystemMessage
     },
     ...aiState.get().messages.map((message: any) => ({
       role: message.role,
@@ -202,7 +220,8 @@ export const AI = createAI<AIState, UIState>({
       const { chatId, messages } = state
       const chat: Chat = {
         id: chatId,
-        title: (messages[0]?.content as string)?.substring(0, 100) || 'New Chat',
+        title:
+          (messages[0]?.content as string)?.substring(0, 100) || 'New Chat',
         userId: session.user.id,
         createdAt: new Date(),
         messages,
@@ -225,9 +244,9 @@ export const getUIStateFromAIState = (aiState: Chat) => {
               <IconUser className="size-4" />
             </div>
             <div className="ml-4 flex-1 space-y-2 overflow-hidden px-1">
-              {typeof message.content === 'string' 
-                ? message.content 
-                : message.content.map(part => 
+              {typeof message.content === 'string'
+                ? message.content
+                : message.content.map(part =>
                     'text' in part ? part.text : null
                   )}
             </div>
