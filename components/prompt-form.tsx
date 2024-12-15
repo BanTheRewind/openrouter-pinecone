@@ -7,7 +7,7 @@ import { useActions, useUIState } from 'ai/rsc'
 
 import { type AI } from '@/lib/chat/actions'
 import { Button } from '@/components/ui/button'
-import { IconArrowElbow, IconPlus } from '@/components/ui/icons'
+import { IconArrowElbow, IconPlus, IconUpload } from '@/components/ui/icons'
 import {
   Tooltip,
   TooltipContent,
@@ -18,6 +18,7 @@ import { useRouter } from 'next/navigation'
 import { useQueryState } from 'nuqs'
 import { handleMessageSubmission } from '@/lib/chat/utils'
 import { useOpenRouterAuth } from '@/app/openrouter-auth-provider'
+import { FileUpload } from '@/components/file-upload'
 
 export function PromptForm({
   input,
@@ -46,16 +47,13 @@ export function PromptForm({
       onSubmit={async (e: any) => {
         e.preventDefault()
 
-        // Blur focus on mobile
         if (window.innerWidth < 600) {
           e.target['message']?.blur()
         }
 
         const value = input.trim()
         setInput('')
-        if (!value) {
-          return
-        }
+        if (!value) return
 
         if (!openRouterKey) {
           setIsDialogOpen(true)
@@ -104,7 +102,8 @@ export function PromptForm({
           value={input}
           onChange={e => setInput(e.target.value)}
         />
-        <div className="absolute right-0 top-[13px] sm:right-4">
+        <div className="absolute right-0 top-[13px] flex gap-2 sm:right-4">
+          <FileUpload />
           <Tooltip>
             <TooltipTrigger asChild>
               <Button type="submit" size="icon" disabled={input === ''}>

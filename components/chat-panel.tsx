@@ -43,24 +43,24 @@ export function ChatPanel({
 
   const exampleMessages = [
     {
-      heading: 'What are the',
-      subheading: 'trending meme stocks today?',
-      message: `What are the trending meme stocks today?`
+      heading: 'Can you summarize',
+      subheading: 'this document for me?',
+      message: 'Can you summarize the main points of this document?'
     },
     {
-      heading: 'What is the price of',
-      subheading: '$NVDA right now?',
-      message: 'What is the price of $NVDA right now?'
+      heading: 'What are the key',
+      subheading: 'findings in section 2?',
+      message: 'What are the key findings discussed in section 2?'
     },
     {
-      heading: 'I would like to buy',
-      subheading: '42 $NVDA',
-      message: `I would like to buy 42 $NVDA`
+      heading: 'Compare the',
+      subheading: 'methods used',
+      message: 'Compare the different methods discussed in this paper.'
     },
     {
-      heading: 'What are some',
-      subheading: `recent events about $NVDA?`,
-      message: `What are some recent events about $NVDA?`
+      heading: 'Explain the',
+      subheading: 'conclusions drawn',
+      message: 'Can you explain the main conclusions drawn by the authors?'
     }
   ]
 
