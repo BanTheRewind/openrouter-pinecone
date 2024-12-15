@@ -1,7 +1,7 @@
 import { nanoid } from 'nanoid'
 import { ErrorMessage } from '@/components/ui/error-message'
-import { UserMessage } from '@/components/stocks/message'
 import React from 'react'
+import { IconUser } from '@/components/ui/icons'
 
 interface Message {
   id: string
@@ -31,7 +31,16 @@ export async function handleMessageSubmission(
       ...currentMessages,
       {
         id: nanoid(),
-        display: <UserMessage>{message}</UserMessage>
+        display: (
+          <div className="group relative flex items-start md:-ml-12">
+            <div className="flex size-8 shrink-0 select-none items-center justify-center rounded-md border shadow-sm bg-background">
+              <IconUser className="size-4" />
+            </div>
+            <div className="ml-4 flex-1 space-y-2 overflow-hidden px-1">
+              {typeof message === 'string' ? message : message}
+            </div>
+          </div>
+        )
       }
     ])
   }

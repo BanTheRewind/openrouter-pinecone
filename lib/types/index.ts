@@ -4,25 +4,6 @@ export type Message = MessageBase & {
   id: string
 }
 
-export type Stock = {
-  symbol: string
-  price: number
-  delta: number
-}
-
-export type Event = {
-  date: string
-  headline: string
-  description: string
-}
-
-export type Purchase = {
-  numberOfShares?: number
-  symbol: string
-  price: number
-  status: 'requires_action' | 'completed' | 'expired'
-}
-
 export interface Chat extends Record<string, any> {
   id: string
   title: string
@@ -57,4 +38,30 @@ export interface User extends Record<string, unknown> {
   email: string
   password: string
   salt: string
+}
+
+export interface Document {
+  id: string
+  filename: string
+  userId: string
+  createdAt: Date
+  metadata?: {
+    pageCount?: number
+    author?: string
+    createdAt?: Date
+  }
+}
+
+export interface DocumentChunk {
+  id: string
+  documentId: string
+  content: string
+  metadata: {
+    pageNumber: number
+    location?: {
+      startOffset: number
+      endOffset: number
+    }
+  }
+  embedding?: number[]
 }
