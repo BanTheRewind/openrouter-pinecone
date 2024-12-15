@@ -4,6 +4,7 @@ import {
   openRouterWebUrl
 } from '@/lib/utils'
 import { NextRequest, NextResponse } from 'next/server'
+import { cookies } from 'next/headers'
 
 export async function POST(req: NextRequest) {
   const { code, codeVerifier } = await req.json()
@@ -40,7 +41,18 @@ export async function POST(req: NextRequest) {
       throw new Error('No key received from OpenRouter')
     }
 
-    return NextResponse.json({ key: data.key })
+    // Create response with cookie
+    const res = NextResponse.json({ key: data.key })
+
+    // Set the OpenRouter token as a cookie
+    res.cookies.set('openrouter_token', data.key, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      path: '/'
+    })
+
+    return res
   } catch (error) {
     return NextResponse.json(
       { error: 'Failed to authenticate with OpenRouter' },
