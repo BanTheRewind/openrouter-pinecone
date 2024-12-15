@@ -3,7 +3,7 @@
 </a>
 
 <p align="center">
-  Multi-model streaming UI via function calling
+  Multi-model document querying with Pinecone vector embeddings and OpenRouter AI
 </p>
 
 <p align="center">
@@ -17,17 +17,23 @@
 
 ## Features
 
-- [OpenRouter](https://openrouter.ai) to route your requests to hundreds of AI models
-- [Next.js](https://nextjs.org) App Router
-- React Server Components (RSCs), Suspense, and Server Actions
-- [Vercel AI SDK](https://sdk.vercel.ai/docs) for streaming chat UI
-- Support for OpenAI (default), Anthropic, Cohere, Hugging Face, or custom AI chat models and/or LangChain
-- [shadcn/ui](https://ui.shadcn.com)
-  - Styling with [Tailwind CSS](https://tailwindcss.com)
-  - [Radix UI](https://radix-ui.com) for headless component primitives
-  - Icons from [Phosphor Icons](https://phosphoricons.com)
-- Chat History, rate limiting, and session storage with [Vercel KV](https://vercel.com/storage/kv)
-- [NextAuth.js](https://github.com/nextauthjs/next-auth) for authentication
+- [OpenRouter](https://openrouter.ai) integration for multi-model AI responses
+- Semantic document search using [Pinecone](https://pinecone.io) vector database
+- PDF processing and intelligent chunking
+- OpenAI for document embeddings
+- Advanced document processing pipeline:
+  - PDF parsing and text extraction
+  - Smart document chunking with overlap
+  - Vector embeddings generation
+  - Efficient vector storage and retrieval
+- Built with modern stack:
+  - [Next.js](https://nextjs.org) App Router
+  - React Server Components (RSCs)
+  - [Vercel AI SDK](https://sdk.vercel.ai/docs) for streaming responses
+  - [shadcn/ui](https://ui.shadcn.com) components
+  - [Tailwind CSS](https://tailwindcss.com) styling
+- Authentication via [NextAuth.js](https://github.com/nextauthjs/next-auth)
+- Session management with [Vercel KV](https://vercel.com/storage/kv)
 
 ## Deploy Your Own
 
@@ -60,4 +66,4 @@ Your app template should now be running on [localhost:3000](http://localhost:300
 
 ## Forked from
 
-- [Vercel AI Chatbot](https://github.com/vercel/ai-chatbot)
+- [OpenRouter Tool-calling](https://github.com/OpenRouterTeam/tool-calling)
