@@ -20,6 +20,8 @@ import { auth } from '@/auth'
 import { APICallError, CoreMessage } from 'ai'
 import { searchDocuments } from '@/lib/pinecone/document-service'
 import { OpenAI } from 'openai'
+import OrbLoader from '@/components/orb-loader'
+import { TextShimmer } from '@/components/ui/text-shimmer'
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY
@@ -142,8 +144,9 @@ async function submitUserMessage(
     const result = await streamUI({
       model,
       initial: (
-        <div className="flex gap-2">
-          <div className="animate-spin">⌛</div> Thinking...
+        <div className="flex items-center gap-2">
+          <OrbLoader />
+          <TextShimmer>Thinking...</TextShimmer>
         </div>
       ),
       messages,
