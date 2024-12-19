@@ -40,6 +40,17 @@ export interface User extends Record<string, unknown> {
   salt: string
 }
 
+export interface ParsedPage {
+  pageNumber: number
+  text: string
+}
+
+export interface PageEmbedding {
+  pageNumber: number
+  embedding: number[]
+  text: string
+}
+
 export interface Document {
   id: string
   filename: string
@@ -50,16 +61,4 @@ export interface Document {
     author?: string
     createdAt?: Date
   }
-}
-
-export interface DocumentChunk {
-  id: string
-  documentId: string
-  content: string
-  metadata: {
-    pageNumber: number
-    startOffset: number
-    endOffset: number
-  }
-  embedding?: number[]
 }

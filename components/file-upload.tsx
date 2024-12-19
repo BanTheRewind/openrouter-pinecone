@@ -13,6 +13,8 @@ interface FileUploadProps {
 export function FileUpload({ className }: FileUploadProps) {
   const [isUploading, setIsUploading] = useState(false)
   const [fileName, setFileName] = useState<string>()
+  const [isSuccess, setIsSuccess] = useState(false)
+  const [showFullMessage, setShowFullMessage] = useState(false)
   const inputRef = useRef<HTMLInputElement>(null)
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -23,8 +25,10 @@ export function FileUpload({ className }: FileUploadProps) {
 
     try {
       console.log('Starting upload process...')
+      setIsSuccess(false)
       setIsUploading(true)
       setFileName(file.name)
+      setShowFullMessage(false)
 
       const formData = new FormData()
       formData.append('file', file)
@@ -55,10 +59,15 @@ export function FileUpload({ className }: FileUploadProps) {
 
       const data = await response.json()
       console.log('Upload successful:', data)
+      setIsSuccess(true)
+      setShowFullMessage(true)
+      setTimeout(() => {
+        setShowFullMessage(false)
+      }, 3000)
       
     } catch (error) {
       console.error('Upload error:', error)
-      // You might want to show an error message to the user here
+      setIsSuccess(false)
     } finally {
       setIsUploading(false)
       if (inputRef.current) {
@@ -92,8 +101,20 @@ export function FileUpload({ className }: FileUploadProps) {
         className="hidden"
       />
       {fileName && (
-        <span className="text-sm text-muted-foreground ml-2">
-          {isUploading ? `Uploading ${fileName}...` : fileName}
+        <span className="text-sm ml-2">
+          {isUploading ? (
+            <span className="text-muted-foreground">Uploading {fileName}...</span>
+          ) : isSuccess ? (
+            showFullMessage ? (
+              <span className="text-green-600">
+                File uploaded successfully! Now chatting with {fileName}
+              </span>
+            ) : (
+              <span className="text-muted-foreground">{fileName}</span>
+            )
+          ) : (
+            <span className="text-muted-foreground">{fileName}</span>
+          )}
         </span>
       )}
     </div>

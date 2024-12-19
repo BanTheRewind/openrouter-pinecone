@@ -1,4 +1,4 @@
-import { DocumentChunk } from '@/lib/types'
+import { ParsedPage } from '@/lib/types'
 
 interface ChunkingOptions {
   maxChunkSize?: number
@@ -6,76 +6,101 @@ interface ChunkingOptions {
   minChunkSize?: number
 }
 
-export function createChunks(
-  text: string,
-  documentId: string,
-  options: ChunkingOptions = {}
-): DocumentChunk[] {
-  console.log('Starting chunking process...')
-  console.log('Text length:', text.length)
+export interface Chunk {
+  pageNumber: number
+  text: string
+  metadata: {
+    startOffset: number
+    endOffset: number
+    isStartOfPage: boolean
+    isEndOfPage: boolean
+  }
+}
 
+export function createChunks(
+  pages: ParsedPage[],
+  options: ChunkingOptions = {}
+): Chunk[] {
   const {
     maxChunkSize = 1500,
-    overlapSize = 200,
-    minChunkSize = 500
-  } = options;
+    overlapSize = 250,
+    minChunkSize = 250
+  } = options
 
-  const chunks: DocumentChunk[] = [];
-  let currentPosition = 0;
-  let chunkIndex = 0;
+  const chunks: Chunk[] = []
 
-  while (currentPosition < text.length) {
-    let endPosition = Math.min(currentPosition + maxChunkSize, text.length);
+  for (const page of pages) {
+    const text = page.text.trim()
     
-    // Handle the final chunk differently
-    if (text.length - currentPosition < maxChunkSize) {
-      // If remaining text is too small, append to last chunk or create final chunk
-      const remainingText = text.slice(currentPosition).trim();
-      
-      if (chunks.length > 0 && remainingText.length < minChunkSize) {
-        // Append to last chunk
-        const lastChunk = chunks[chunks.length - 1];
-        lastChunk.content += ' ' + remainingText;
-        lastChunk.metadata.endOffset = text.length;
-        console.log('Appended final text to last chunk');
-      } else {
-        // Create final chunk
-        chunks.push({
-          id: `${documentId}:chunk:${chunkIndex}`,
-          documentId,
-          content: remainingText,
-          metadata: {
-            pageNumber: 1,
-            startOffset: currentPosition,
-            endOffset: text.length
-          }
-        });
-        console.log('Created final chunk');
-      }
-      break; // Exit the loop
+    if (!text) {
+      continue
     }
 
-    // Normal chunk processing
-    const chunkContent = text.slice(currentPosition, endPosition).trim();
-    
-    if (chunkContent.length >= minChunkSize) {
+    if (text.length <= maxChunkSize) {
       chunks.push({
-        id: `${documentId}:chunk:${chunkIndex}`,
-        documentId,
-        content: chunkContent,
+        pageNumber: page.pageNumber,
+        text,
         metadata: {
-          pageNumber: 1,
-          startOffset: currentPosition,
-          endOffset: endPosition
+          startOffset: 0,
+          endOffset: text.length,
+          isStartOfPage: true,
+          isEndOfPage: true
         }
-      });
-      chunkIndex++;
-      currentPosition = endPosition - overlapSize;
-    } else {
-      currentPosition = endPosition;
+      })
+      continue
+    }
+
+    let currentPosition = 0
+    while (currentPosition < text.length) {
+      let endPosition = Math.min(currentPosition + maxChunkSize, text.length)
+      
+      if (endPosition < text.length) {
+        const possibleBreaks = ['. ', '? ', '! ', '\n\n', '. \n', '\n']
+        let bestBreak = endPosition
+
+        for (const breakPoint of possibleBreaks) {
+          const lastBreak = text.lastIndexOf(
+            breakPoint, 
+            endPosition
+          )
+          if (lastBreak > currentPosition && lastBreak < bestBreak) {
+            bestBreak = lastBreak + breakPoint.length
+          }
+        }
+
+        endPosition = bestBreak
+      }
+
+      const chunkContent = text.slice(currentPosition, endPosition).trim()
+      
+      if (chunkContent.length >= minChunkSize) {
+        chunks.push({
+          pageNumber: page.pageNumber,
+          text: chunkContent,
+          metadata: {
+            startOffset: currentPosition,
+            endOffset: endPosition,
+            isStartOfPage: currentPosition === 0,
+            isEndOfPage: endPosition === text.length
+          }
+        })
+      }
+
+      currentPosition = Math.max(
+        currentPosition + 1,
+        endPosition - overlapSize
+      )
     }
   }
 
-  console.log('Chunking complete. Total chunks:', chunks.length);
-  return chunks;
+  console.log('\nChunk Statistics:')
+  console.log(`Total chunks created: ${chunks.length}`)
+  chunks.forEach((chunk, i) => {
+    console.log(`Chunk ${i + 1}:`)
+    console.log(`- Page: ${chunk.pageNumber}`)
+    console.log(`- Length: ${chunk.text.length} characters`)
+    console.log(`- Preview: ${chunk.text.slice(0, 100)}...`)
+  })
+
+  return chunks
 }

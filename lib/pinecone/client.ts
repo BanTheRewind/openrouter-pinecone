@@ -1,73 +1,82 @@
 import { Pinecone } from '@pinecone-database/pinecone'
-import { DocumentChunk } from '@/lib/types'
+import { PageEmbedding } from '@/lib/types'
 
-if (!process.env.PINECONE_API_KEY) {
-  throw new Error('Missing PINECONE_API_KEY')
-}
-
-
-if (!process.env.PINECONE_INDEX_NAME) {
-  throw new Error('Missing PINECONE_INDEX_NAME')
+if (!process.env.PINECONE_API_KEY || !process.env.PINECONE_INDEX_NAME) {
+  throw new Error('Missing Pinecone configuration')
 }
 
 const pinecone = new Pinecone({
-  apiKey: process.env.PINECONE_API_KEY!
+  apiKey: process.env.PINECONE_API_KEY
 })
 
 const index = pinecone.index(process.env.PINECONE_INDEX_NAME)
 
-export interface VectorMetadata extends Record<string, any> {
-  documentId: string
-  pageNumber: number
-  location?: {
-    startOffset: number
-    endOffset: number
-  }
-  text: string
-}
+export async function upsertEmbeddings(
+  documentId: string,
+  embeddings: PageEmbedding[]
+) {
+  console.log(`\n=== Pinecone Upload Started ===`)
+  console.log(`Total embeddings to upload: ${embeddings.length}`)
 
-export async function upsertVectors(chunks: DocumentChunk[]) {
-  const vectors = chunks.map(chunk => ({
-    id: chunk.id,
-    values: chunk.embedding!,
+  const vectors = embeddings.map(({ pageNumber, embedding, text }, index) => ({
+    id: `${documentId}:page:${pageNumber}:chunk:${index}`,
+    values: embedding,
     metadata: {
-      documentId: chunk.documentId,
-      pageNumber: chunk.metadata.pageNumber,
-      location: chunk.metadata.location,
-      text: chunk.content
-    } as VectorMetadata
+      documentId,
+      pageNumber,
+      chunkIndex: index,
+      totalChunks: embeddings.length,
+      text
+    }
   }))
 
-  // Batch upsert in groups of 100
+  console.log('\n=== Vector IDs Preview ===')
+  vectors.slice(0, 3).forEach(v => console.log(`ID: ${v.id}`))
+  console.log(`... and ${vectors.length - 3} more\n`)
+
   const batchSize = 100
+  let uploadedCount = 0
+  let lastBatchIds: string[] = []
+
   for (let i = 0; i < vectors.length; i += batchSize) {
     const batch = vectors.slice(i, i + batchSize)
-    await index.upsert(batch)
+    try {
+      await index.upsert(batch)
+      uploadedCount += batch.length
+      lastBatchIds = batch.map(v => v.id)
+      console.log(`Uploaded batch: ${uploadedCount}/${vectors.length} vectors`)
+    } catch (error) {
+      console.error(`Failed to upload batch ${i/batchSize + 1}:`, error)
+      throw error
+    }
   }
+
+  console.log(`\n=== Upload Summary ===`)
+  console.log(`Total vectors uploaded: ${uploadedCount}`)
+  console.log(`Document ID: ${documentId}`)
+  console.log('Last batch IDs:', lastBatchIds.join(', '))
+  console.log(`===========================\n`)
+
+  return uploadedCount
 }
 
-export async function queryVectors(
+export async function queryEmbeddings(
   embedding: number[],
-  topK: number = 5,
-  filter?: { documentId?: string }
+  topK = 20
 ) {
   const results = await index.query({
     vector: embedding,
     topK,
-    filter: filter,
     includeMetadata: true
   })
 
   return results.matches.map(match => ({
-    score: match.score,
-    metadata: match.metadata as VectorMetadata
+    score: match.score ?? 0,
+    metadata: {
+      documentId: String(match.metadata?.documentId ?? ''),
+      pageNumber: Number(match.metadata?.pageNumber ?? 0),
+      text: String(match.metadata?.text ?? '')
+    }
   }))
 }
 
-export async function deleteDocumentVectors(documentId: string) {
-  await index.deleteMany({
-    filter: {
-      documentId: documentId
-    }
-  })
-}

@@ -1,0 +1,183 @@
+Let me break this down into a structured plan for transforming this application into a PDF document chat interface with vector storage.
+
+## Current Analysis:
+
+- ✓ The app currently uses OpenRouter for AI interactions and has a chat interface
+- ✓ Stock-related components removed from chat interface
+- ✓ Uses Next.js App Router with RSC patterns
+- ✓ Has authentication and session management
+- ✓ Uses KV for chat history storage
+- ✓ Using vercel ai sdk tool calling to perform RAG with pinecone index
+
+## Recent Changes:
+
+- ✓ Separated BotMessage into client component
+- ✓ Fixed streaming implementation with RSC patterns
+- ✓ Updated chat interface for document context
+- ✓ Added basic types for documents in index.ts
+- ✓ Created enhanced file-upload component with Shadcn UI
+- ✓ Updated example messages for PDF context
+- ✓ Added proper IconUpload component
+- ✓ Implemented PDF processing utility
+- ✓ Created PDF upload endpoint
+- ✓ Added chunking logic with page tracking
+- ✓ Integrated chunking with PDF processing
+- ✓ Added OpenAI embeddings generation
+- ✓ Setup Pinecone client with proper typing
+- ✓ Implemented vector storage with batch upsert
+- ✓ Added document search and deletion functions
+
+## Notes for Next Implementation:
+
+Code Needed for Review:
+- Current FileUpload component implementation
+- Chat interface components (especially EmptyScreen and ChatPanel)
+- PDF processing pipeline (API routes and utilities)
+- Current chat API route implementation
+- System prompt configuration
+- Message types and interfaces
+
+Key Integration Points:
+- Where to place FileUpload in chat UI
+- How to handle upload state and feedback
+- How to modify chat context with PDF content
+- Where to store active document reference
+- How to include source references in responses
+
+Testing Requirements:
+- PDF upload and processing flow
+- Vector storage and retrieval accuracy
+- Chat completion with document context
+- Error handling and user feedback
+
+## Implementation Phases:
+
+Phase 1: Cleanup & Setup ✓
+
+- ✓ Remove stock components
+- ✓ Setup new dependencies
+- ✓ Configure environment variables
+- ✓ Create basic file upload UI
+- ✓ Complete cleanup of stock references
+- ✓ Integrate proper UI button component
+
+Phase 2: PDF Processing
+A. Direct PDF Processing
+
+- [✓] Create PDF upload endpoint that accepts file
+- [✓] Implement pdf-parse processing
+- [✓] Add proper error handling and validation
+
+B. Chunking Logic
+
+- [✓] Define chunk size and overlap
+- [✓] Implement text splitting
+- [✓] Handle metadata extraction
+
+C. Embeddings Generation
+
+- [✓] Configure OpenAI client
+- [✓] Create embedding generation
+- [✓] Add batch processing
+
+Phase 3: Pinecone Integration ✓
+
+- [✓] Setup Pinecone client
+- [✓] Implement vector storage
+- [✓] Create similarity search
+- [✓] Add context retrieval
+
+Phase 4: Initial PDF Chat Integration
+
+A. Basic Upload Integration
+- [✓] Add FileUpload component to chat interface
+- [✓] Connect upload to PDF processing pipeline
+- [✓] Add upload status feedback
+- [✓] Test complete upload-to-vector flow
+- [✓] Fix vector ID collisions in Pinecone
+- [✓] Improve PDF text extraction and structure
+- [✓] Add detailed logging throughout pipeline
+- [✓] Verify proper chunk storage in vector DB
+
+B. Chat Context Integration
+- [ ] Implement proper tool calling for RAG:
+  - [ ] Define searchDocuments tool with parameters
+  - [ ] Update system prompt for tool usage
+  - [ ] Add tool calling handlers with UI feedback
+  - [ ] Implement multi-step loading states
+- [ ] Add progressive UI feedback:
+  - [ ] Show "Thinking..." state
+  - [ ] Display "Searching documents..." during RAG
+  - [ ] Indicate "Found relevant context"
+  - [ ] Show "Generating response..." state
+- [ ] Enhance response formatting:
+  - [ ] Add source attribution to bot messages
+  - [ ] Format citations consistently
+  - [ ] Include relevance scores where appropriate
+- [ ] Implement error handling:
+  - [ ] Handle tool call failures gracefully
+  - [ ] Show appropriate error messages
+  - [ ] Maintain streaming state during errors
+- [ ] Test and optimize:
+  - [ ] Verify tool calling flow
+  - [ ] Test streaming UI updates
+  - [ ] Validate citation formatting
+  - [ ] Check error recovery
+
+C. Core Testing & Fixes
+- [✓] Test PDF upload and processing
+- [✓] Verify vector storage and retrieval
+- [ ] Test chat with document context
+- [ ] Add error handling for failed uploads
+
+Phase 5: Memory Management UI
+
+A. Sidebar Implementation
+- [ ] Create new MemoryPanel component using Shadcn Sheet
+- [ ] Add toggle button in chat header
+- [ ] Design sidebar layout with sections for:
+  - Active namespace display
+  - Uploaded documents list
+  - Document management controls
+
+B. Document State Management
+- [ ] Create types for document metadata storage
+- [ ] Implement KV storage for document tracking
+- [ ] Add API endpoints for:
+  - Fetching current namespace
+  - Listing uploaded documents
+  - Deleting documents
+  - Switching between documents
+
+C. UI Components
+- [ ] Create DocumentList component
+  - Show file names
+  - Upload dates
+  - Page counts
+  - Delete options
+- [ ] Add namespace display/selector
+- [ ] Implement document switching functionality
+- [ ] Add loading states and error handling
+
+D. Integration
+- [ ] Connect sidebar to existing chat context
+- [ ] Update chat system prompt based on active document
+- [ ] Implement document deletion flow
+  - Remove from KV storage
+  - Delete vectors from Pinecone
+- [ ] Add proper error handling and user feedback
+
+E. Testing & Polish
+- [ ] Test document switching
+- [ ] Verify deletion flow
+- [ ] Add animations for sidebar
+- [ ] Implement responsive design
+- [ ] Add keyboard shortcuts
+
+Future Enhancements (Later Phase):
+- Multiple document context
+- Document search within sidebar
+- Document categorization
+- Batch operations
+- Export/import functionality
+- Memory persistence across sessions

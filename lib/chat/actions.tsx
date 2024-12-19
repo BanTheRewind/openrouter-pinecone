@@ -1,4 +1,5 @@
 // lib/chat/actions.tsx
+'use server'
 import 'server-only'
 
 import {
@@ -27,7 +28,12 @@ const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY
 })
 
-export function SystemMessage({ children }: { children: React.ReactNode }) {
+export async function SystemMessage({
+  children
+}: {
+  children: React.ReactNode
+}) {
+  'use server'
   return (
     <div className="mt-2 flex items-center gap-2 text-sm text-muted-foreground">
       <span className="bg-muted p-1 rounded">{children}</span>
@@ -92,55 +98,72 @@ async function submitUserMessage(
   openRouterKey?: string
 ) {
   'use server'
-
   const aiState = getMutableAIState<typeof AI>()
-
-  // Get relevant context from Pinecone
-  const context = await searchDocuments(content)
-  const contextText = context
-    .map(
-      result =>
-        `Context (score ${result.score?.toFixed(2)}): ${result.metadata.text}`
-    )
-    .join('\n\n')
-
-  // Enhance system message with context
-  const enhancedSystemMessage = `${systemMessage}\n\nRelevant document context:\n${contextText}`
-
-  const prevConversation = aiState.get().messages
-  const userMessage = {
-    id: nanoid(),
-    role: 'user',
-    content
-  } satisfies Message
-
-  aiState.update({
-    ...aiState.get(),
-    messages: [...prevConversation, userMessage]
-  })
-
-  let textStream: undefined | ReturnType<typeof createStreamableValue<string>>
-  let textNode: undefined | React.ReactNode
-
-  const openrouter = createOpenRouter({
-    baseURL: openRouterAPIBaseUrl + '/api/v1/',
-    apiKey: openRouterKey ?? process.env.OPENROUTER_API_KEY
-  })
-
-  const model = openrouter(modelSlug || defaultModelSlug)
-  const messages = [
-    {
-      role: 'system',
-      content: enhancedSystemMessage
-    },
-    ...aiState.get().messages.map((message: any) => ({
-      role: message.role,
-      content: message.content,
-      name: message.name
-    }))
-  ] satisfies CoreMessage[]
+  let textStream: ReturnType<typeof createStreamableValue<string>> | undefined
+  let textNode: React.ReactNode | undefined
 
   try {
+    // Get and process relevant context
+    const searchResults = await searchDocuments(content)
+    const contextWithSources = searchResults
+      .sort((a, b) => (b.score ?? 0) - (a.score ?? 0))
+      .map(result => ({
+        text: result.metadata.text,
+        source: `Page ${result.metadata.pageNumber}`,
+        score: result.score
+      }))
+
+    // Format context more effectively
+    const contextText = contextWithSources
+      .map(
+        ctx =>
+          `[Source: Page ${ctx.source}] (Relevance: ${(ctx.score ?? 0).toFixed(2)})
+        ${ctx.text}`
+      )
+      .join('\n\n')
+
+    const enhancedSystemMessage = `
+      ${systemMessage}
+      
+      Here is the relevant context from the document (ordered by relevance):
+      ${contextText}
+      
+      Instructions:
+      1. Always cite sources using [Page X] notation
+      2. If the context doesn't contain relevant information, say so
+      3. Focus on the most relevant passages (higher relevance scores)
+    `
+
+    const prevConversation = aiState.get().messages
+    const userMessage = {
+      id: nanoid(),
+      role: 'user',
+      content
+    } satisfies Message
+
+    aiState.update({
+      ...aiState.get(),
+      messages: [...prevConversation, userMessage]
+    })
+
+    const openrouter = createOpenRouter({
+      baseURL: openRouterAPIBaseUrl + '/api/v1/',
+      apiKey: openRouterKey ?? process.env.OPENROUTER_API_KEY
+    })
+
+    const model = openrouter(modelSlug || defaultModelSlug)
+    const messages = [
+      {
+        role: 'system',
+        content: enhancedSystemMessage
+      },
+      ...aiState.get().messages.map((message: any) => ({
+        role: message.role,
+        content: message.content,
+        name: message.name
+      }))
+    ] satisfies CoreMessage[]
+
     const result = await streamUI({
       model,
       initial: (
@@ -151,29 +174,36 @@ async function submitUserMessage(
       ),
       messages,
       text: ({ content, done, delta }) => {
-        if (!textStream) {
-          textStream = createStreamableValue('')
-          textNode = <BotMessage content={textStream.value} />
-        }
+        try {
+          if (!textStream) {
+            textStream = createStreamableValue('')
+            textNode = <BotMessage content={textStream.value} />
+          }
 
-        if (done) {
-          textStream.done()
-          aiState.done({
-            ...aiState.get(),
-            messages: [
-              ...aiState.get().messages,
-              {
-                id: nanoid(),
-                role: 'assistant',
-                content
-              }
-            ]
-          })
-        } else {
-          textStream.update(delta)
-        }
+          if (done) {
+            textStream.update(content)
+            textStream.done()
+            aiState.done({
+              ...aiState.get(),
+              messages: [
+                ...aiState.get().messages,
+                {
+                  id: nanoid(),
+                  role: 'assistant',
+                  content
+                }
+              ]
+            })
+          } else {
+            textStream.update(delta)
+          }
 
-        return textNode
+          return textNode
+        } catch (error) {
+          // Ensure stream is properly closed even if there's an error
+          textStream?.done()
+          throw error
+        }
       }
     })
 
@@ -182,11 +212,16 @@ async function submitUserMessage(
       display: result.value
     }
   } catch (error) {
+    // Always ensure stream is closed in case of errors
+    textStream?.done()
     const errorMessage = getErrorMessage(error)
     return {
       id: nanoid(),
       display: <BotMessage content={errorMessage} />
     }
+  } finally {
+    // Belt and suspenders approach - always ensure stream is closed
+    textStream?.done()
   }
 }
 
