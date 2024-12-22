@@ -35,11 +35,30 @@
 - Authentication via [NextAuth.js](https://github.com/nextauthjs/next-auth)
 - Session management with [Vercel KV](https://vercel.com/storage/kv)
 
-## Deploy Your Own
+## Quick Start
 
-You can deploy your own version of the OpenRouter Tool Calling demo to Vercel with one click:
+1. Clone and install dependencies:
 
-[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?demo-title=Next.js+Chat&demo-description=A+full-featured%2C+hackable+Next.js+AI+chatbot+built+by+Vercel+Labs&demo-url=https%3A%2F%2Fchat.vercel.ai%2F&demo-image=%2F%2Fimages.ctfassets.net%2Fe5382hct74si%2F4aVPvWuTmBvzM5cEdRdqeW%2F4234f9baf160f68ffb385a43c3527645%2FCleanShot_2023-06-16_at_17.09.21.png&project-name=Next.js+Chat&repository-name=nextjs-chat&repository-url=https%3A%2F%2Fgithub.com%2Fvercel-labs%2Fai-chatbot&from=templates&skippable-integrations=1&env=OPENROUTER_API_KEY%2CAUTH_SECRET&envDescription=How+to+get+these+env+vars&envLink=https%3A%2F%2Fgithub.com%2Fvercel-labs%2Fai-chatbot%2Fblob%2Fmain%2F.env.example&teamCreateStatus=hidden&stores=[{"type":"kv"}])
+```bash
+git clone https://github.com/nlawz/openrouter-pinecone
+cd starter
+pnpm install
+```
+
+2. Set up your environment:
+
+```bash
+cp .env.example .env
+```
+
+3. Configure your `.env` file with environment variables
+4. Start your development server
+
+```bash
+pnpm dev
+```
+5. Go to http://localhost:3000/ 
+
 
 ## Creating a KV Database Instance
 
@@ -47,7 +66,37 @@ Follow the steps outlined in the [quick start guide](https://vercel.com/docs/sto
 
 Remember to update your environment variables (`KV_URL`, `KV_REST_API_URL`, `KV_REST_API_TOKEN`, `KV_REST_API_READ_ONLY_TOKEN`) in the `.env` file with the appropriate credentials provided during the KV database setup.
 
+## Pinecone Setup
+1. Create a Pinecone account at https://www.pinecone.io/
+2. Create a new project in Pinecone
+3. Create an index with the following settings:
+   - Dimensions: 1536 (for OpenAI embeddings, using text-embedding-3-small)
+   - Metric: Cosine
+4. Copy these values to your `.env`:
+   
+  ```
+  PINECONE_API_KEY= From Pinecone Console → API Keys
+  PINECONE_INDEX_NAME= The name you gave your index
+  ```
+
+## OpenAI Setup
+1. Create an OpenAI account at https://platform.openai.com/
+2. Navigate to API Keys section: https://platform.openai.com/api-keys
+3. Create a new API key
+4. Add to your `.env`:
+
 ## Running locally
+
+```bash
+pnpm install
+pnpm dev
+```
+
+## Deploy Your Own
+
+You can deploy your own version of the OpenRouter Tool Calling demo to Vercel with one click:
+
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?demo-title=Next.js+Chat&demo-description=A+full-featured%2C+hackable+Next.js+AI+chatbot+built+by+Vercel+Labs&demo-url=https%3A%2F%2Fchat.vercel.ai%2F&demo-image=%2F%2Fimages.ctfassets.net%2Fe5382hct74si%2F4aVPvWuTmBvzM5cEdRdqeW%2F4234f9baf160f68ffb385a43c3527645%2FCleanShot_2023-06-16_at_17.09.21.png&project-name=Next.js+Chat&repository-name=nextjs-chat&repository-url=https%3A%2F%2Fgithub.com%2Fvercel-labs%2Fai-chatbot&from=templates&skippable-integrations=1&env=OPENROUTER_API_KEY%2CAUTH_SECRET&envDescription=How+to+get+these+env+vars&envLink=https%3A%2F%2Fgithub.com%2Fvercel-labs%2Fai-chatbot%2Fblob%2Fmain%2F.env.example&teamCreateStatus=hidden&stores=[{"type":"kv"}])
 
 You will need to use the environment variables [defined in `.env.example`](.env.example) to run Next.js AI Chatbot. It's recommended you use [Vercel Environment Variables](https://vercel.com/docs/projects/environment-variables) for this, but a `.env` file is all that is necessary.
 
