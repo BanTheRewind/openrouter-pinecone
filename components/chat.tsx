@@ -11,6 +11,7 @@ import { AnimatePresence, motion } from 'framer-motion'
 import { cn } from '@/lib/utils'
 import OrbLoader from './orb-loader'
 import { TextShimmer } from './ui/text-shimmer'
+import { useQueryState } from 'nuqs'
 
 export interface ChatProps extends React.ComponentProps<'div'> {
   initialMessages?: Message[]
@@ -19,6 +20,9 @@ export interface ChatProps extends React.ComponentProps<'div'> {
 
 export function Chat({ id, className }: ChatProps) {
   const [toolCall, setToolCall] = useState<string>()
+  const [modelSlug] = useQueryState('modelSlug', {
+    defaultValue: 'openai/gpt-4o-2024-11-20'
+  })
 
   const {
     messages,
@@ -28,9 +32,9 @@ export function Chat({ id, className }: ChatProps) {
     isLoading
   } = useChat({
     body: {
-      modelSlug: 'anthropic/claude-3.5-sonnet'
+      modelSlug: modelSlug
     },
-    maxToolRoundtrips: 4,
+    maxToolRoundtrips: 5,
     onToolCall({ toolCall }) {
       setToolCall(toolCall.toolName)
     },

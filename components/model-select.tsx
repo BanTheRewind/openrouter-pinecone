@@ -19,46 +19,21 @@ import {
 } from '@/components/ui/tooltip'
 import { InfoCircledIcon } from '@radix-ui/react-icons'
 import { TooltipPortal } from '@radix-ui/react-tooltip'
-import { useUIState } from 'ai/rsc'
-import { AI } from '@/lib/chat/actions'
-
-// const featuredToolCallingModels = [
-//   'anthropic/claude-3-haiku',
-//   'anthropic/claude-3-sonnet',
-//   'anthropic/claude-3-opus',
-//   'anthropic/claude-3.5-sonnet',
-//   'mistralai/mistral-nemo',
-//   'openai/gpt-3.5-turbo',
-//   'openai/gpt-4-turbo',
-//   'openai/gpt-4',
-//   'openai/gpt-4-0314',
-//   'openai/gpt-4-0613',
-//   'openai/gpt-4-32k',
-//   'openai/gpt-4-32k-0314',
-//   // These are highly rate-limited
-//   // 'google/gemini-flash-1.5-exp',
-//   // 'google/gemini-pro-1.5-exp'
-//   // 'meta-llama/llama-3.1-405b-instruct',
-//   'cohere/command-r-plus-08-2024',
-
-//   'google/gemini-pro-1.5',
-//   'google/gemini-flash-1.5',
-//   'mistralai/mistral-large'
-// ]
+import { useChat } from 'ai/react'
 
 export function ModelSelectContent() {
   const { models, isLoading, error } = useModels()
   const [modelSlug, setModelSlug] = useQueryState('modelSlug', {
-    defaultValue: 'anthropic/claude-3.5-sonnet'
+    defaultValue: 'openai/gpt-4o-2024-11-20'
   })
-  const [__, setMessages] = useUIState<typeof AI>()
+  const { reload } = useChat()
 
   const onValueChange = useCallback(
     (value: string) => {
       setModelSlug(value)
-      setMessages([])
+      reload()
     },
-    [setModelSlug, setMessages]
+    [setModelSlug, reload]
   )
 
   const modelOptions = useMemo(() => {
