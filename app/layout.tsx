@@ -1,5 +1,7 @@
 import { GeistSans } from 'geist/font/sans'
 import { GeistMono } from 'geist/font/mono'
+import { SessionProvider } from 'next-auth/react'
+import { auth } from '@/auth'
 
 import '@/app/globals.css'
 import { cn } from '@/lib/utils'
@@ -37,7 +39,9 @@ interface RootLayoutProps {
   children: React.ReactNode
 }
 
-export default function RootLayout({ children }: RootLayoutProps) {
+export default async function RootLayout({ children }: RootLayoutProps) {
+  const session = await auth()
+
   return (
     <html lang="en" suppressHydrationWarning>
       <body
@@ -47,20 +51,22 @@ export default function RootLayout({ children }: RootLayoutProps) {
           GeistMono.variable
         )}
       >
-        <Toaster position="top-center" />
-        <Providers
-          attribute="class"
-          defaultTheme="system"
-          enableSystem
-          disableTransitionOnChange
-        >
-          <div className="flex flex-col min-h-screen">
-            <Header />
-            <main className="flex flex-col flex-1 bg-muted/50">{children}</main>
-            <OpenRouterKeyDialog />
-          </div>
-          <TailwindIndicator />
-        </Providers>
+        <SessionProvider session={session}>
+          <Toaster position="top-center" />
+          <Providers
+            attribute="class"
+            defaultTheme="system"
+            enableSystem
+            disableTransitionOnChange
+          >
+            <div className="flex flex-col min-h-screen">
+              <Header />
+              <main className="flex flex-col flex-1 bg-muted/50">{children}</main>
+              <OpenRouterKeyDialog />
+            </div>
+            <TailwindIndicator />
+          </Providers>
+        </SessionProvider>
       </body>
     </html>
   )

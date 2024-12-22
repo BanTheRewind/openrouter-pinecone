@@ -3,76 +3,62 @@
 
 import { useState, useRef } from 'react'
 import { Button } from '@/components/ui/button'
-import { IconUpload } from '@/components/ui/icons'
+import { AttachFileIcon } from './ui/attach-file'
+import { LoaderPinwheelIcon } from './ui/loader-pinwheel'
+import { CheckIcon } from './ui/check'
 import { cn } from '@/lib/utils'
+import { useOpenRouterAuth } from '@/app/openrouter-auth-provider'
 
 interface FileUploadProps {
   className?: string
 }
 
 export function FileUpload({ className }: FileUploadProps) {
+  const { openRouterKey } = useOpenRouterAuth()
   const [isUploading, setIsUploading] = useState(false)
-  const [fileName, setFileName] = useState<string>()
   const [isSuccess, setIsSuccess] = useState(false)
-  const [showFullMessage, setShowFullMessage] = useState(false)
   const inputRef = useRef<HTMLInputElement>(null)
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    console.log('File selected:', file?.name)
+    if (!openRouterKey) {
+      console.error('OpenRouter key not found')
+      return
+    }
 
+    const file = e.target.files?.[0]
     if (!file || !file.type.includes('pdf')) return
 
     try {
-      console.log('Starting upload process...')
-      setIsSuccess(false)
       setIsUploading(true)
-      setFileName(file.name)
-      setShowFullMessage(false)
+      setIsSuccess(false)
 
       const formData = new FormData()
       formData.append('file', file)
 
-      console.log('Sending request to:', '/api/upload')
-      console.log('File type:', file.type)
-      console.log('File size:', file.size)
-
       const response = await fetch('/api/upload', {
         method: 'POST',
-        credentials: 'same-origin',
-        headers: {
-          'Accept': 'application/json',
-          // Don't set Content-Type - browser will set it with boundary for FormData
-          'X-Debug-Info': 'file-upload-component'
-        },
         body: formData
       })
 
-      console.log('Response status:', response.status)
-      console.log('Response headers:', Object.fromEntries(response.headers.entries()))
-
       if (!response.ok) {
-        const errorData = await response.text()
-        console.error('Response error:', errorData)
-        throw new Error(`Upload failed: ${response.status} - ${errorData}`)
+        throw new Error(`Upload failed: ${response.status}`)
       }
 
-      const data = await response.json()
-      console.log('Upload successful:', data)
+      setIsUploading(false)
       setIsSuccess(true)
-      setShowFullMessage(true)
+      
+      // Reset after showing success
       setTimeout(() => {
-        setShowFullMessage(false)
-      }, 3000)
+        setIsSuccess(false)
+        if (inputRef.current) {
+          inputRef.current.value = ''
+        }
+      }, 2000)
       
     } catch (error) {
       console.error('Upload error:', error)
-      setIsSuccess(false)
-    } finally {
       setIsUploading(false)
-      if (inputRef.current) {
-        inputRef.current.value = ''
-      }
+      setIsSuccess(false)
     }
   }
 
@@ -84,13 +70,19 @@ export function FileUpload({ className }: FileUploadProps) {
     <div className={cn('flex items-center gap-2', className)}>
       <Button
         onClick={handleButtonClick}
-        disabled={isUploading}
+        disabled={isUploading || !openRouterKey}
         size="icon"
         variant="outline"
       >
-        <IconUpload />
+        {isUploading ? (
+          <LoaderPinwheelIcon />
+        ) : isSuccess ? (
+          <CheckIcon />
+        ) : (
+          <AttachFileIcon />
+        )}
         <span className="sr-only">
-          {isUploading ? 'Uploading...' : 'Upload PDF'}
+          {isUploading ? 'Uploading...' : isSuccess ? 'Uploaded!' : 'Upload PDF'}
         </span>
       </Button>
       <input
@@ -100,23 +92,6 @@ export function FileUpload({ className }: FileUploadProps) {
         onChange={handleFileChange}
         className="hidden"
       />
-      {fileName && (
-        <span className="text-sm ml-2">
-          {isUploading ? (
-            <span className="text-muted-foreground">Uploading {fileName}...</span>
-          ) : isSuccess ? (
-            showFullMessage ? (
-              <span className="text-green-600">
-                File uploaded successfully! Now chatting with {fileName}
-              </span>
-            ) : (
-              <span className="text-muted-foreground">{fileName}</span>
-            )
-          ) : (
-            <span className="text-muted-foreground">{fileName}</span>
-          )}
-        </span>
-      )}
     </div>
   )
 }

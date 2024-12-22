@@ -12,9 +12,8 @@ export async function POST(request: Request) {
   try {
     const cookieStore = cookies()
     const openRouterToken = cookieStore.get('openrouter_token')
-    const session = await auth()
 
-    if (!openRouterToken && !session?.user) {
+    if (!openRouterToken) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 

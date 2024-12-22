@@ -14,6 +14,7 @@ import { useRouter } from 'next/navigation'
 import { useOpenRouterAuth } from '@/app/openrouter-auth-provider'
 import { FileUpload } from '@/components/file-upload'
 import { ChangeEvent } from 'react'
+import { OpenRouterAuthProvider } from '@/app/openrouter-auth-provider'
 
 export interface PromptFormProps {
   input: string
@@ -42,11 +43,11 @@ export function PromptForm({
   return (
     <form
       ref={formRef}
-      onSubmit={async (e) => {
+      onSubmit={async e => {
         e.preventDefault()
 
         if (window.innerWidth < 600) {
-          (e.target as HTMLFormElement)['message']?.blur()
+          ;(e.target as HTMLFormElement)['message']?.blur()
         }
 
         if (!openRouterKey) {
@@ -89,12 +90,14 @@ export function PromptForm({
           disabled={isLoading}
         />
         <div className="absolute right-0 top-[13px] flex gap-2 sm:right-4">
-          <FileUpload />
+          <OpenRouterAuthProvider>
+            <FileUpload />
+          </OpenRouterAuthProvider>
           <Tooltip>
             <TooltipTrigger asChild>
-              <Button 
-                type="submit" 
-                size="icon" 
+              <Button
+                type="submit"
+                size="icon"
                 disabled={input === '' || isLoading}
               >
                 <IconArrowElbow />
