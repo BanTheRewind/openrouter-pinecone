@@ -2,12 +2,8 @@
 
 import * as React from 'react'
 import Textarea from 'react-textarea-autosize'
-
-import { useActions, useUIState } from 'ai/rsc'
-
-import { type AI } from '@/lib/chat/actions'
 import { Button } from '@/components/ui/button'
-import { IconArrowElbow, IconPlus, IconUpload } from '@/components/ui/icons'
+import { IconArrowElbow, IconPlus } from '@/components/ui/icons'
 import {
   Tooltip,
   TooltipContent,
@@ -15,25 +11,27 @@ import {
 } from '@/components/ui/tooltip'
 import { useEnterSubmit } from '@/lib/hooks/use-enter-submit'
 import { useRouter } from 'next/navigation'
-import { useQueryState } from 'nuqs'
-import { handleMessageSubmission } from '@/lib/chat/utils'
 import { useOpenRouterAuth } from '@/app/openrouter-auth-provider'
 import { FileUpload } from '@/components/file-upload'
+import { ChangeEvent } from 'react'
+
+export interface PromptFormProps {
+  input: string
+  handleInputChange: (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => void
+  handleSubmit: (e: React.FormEvent<HTMLFormElement>) => void
+  isLoading: boolean
+}
 
 export function PromptForm({
   input,
-  setInput
-}: {
-  input: string
-  setInput: (value: string) => void
-}) {
+  handleInputChange,
+  handleSubmit,
+  isLoading
+}: PromptFormProps) {
   const router = useRouter()
   const { formRef, onKeyDown } = useEnterSubmit()
   const inputRef = React.useRef<HTMLTextAreaElement>(null)
-  const { submitUserMessage } = useActions()
   const { openRouterKey, setIsDialogOpen } = useOpenRouterAuth()
-  const [modelSlug, _] = useQueryState('modelSlug')
-  const [__, setMessages] = useUIState<typeof AI>()
 
   React.useEffect(() => {
     if (inputRef.current) {
@@ -44,29 +42,19 @@ export function PromptForm({
   return (
     <form
       ref={formRef}
-      onSubmit={async (e: any) => {
+      onSubmit={async (e) => {
         e.preventDefault()
 
         if (window.innerWidth < 600) {
-          e.target['message']?.blur()
+          (e.target as HTMLFormElement)['message']?.blur()
         }
-
-        const value = input.trim()
-        setInput('')
-        if (!value) return
 
         if (!openRouterKey) {
           setIsDialogOpen(true)
           return
         }
 
-        await handleMessageSubmission(
-          value,
-          modelSlug,
-          openRouterKey,
-          setMessages,
-          submitUserMessage
-        )
+        handleSubmit(e)
       }}
     >
       <div className="relative flex max-h-60 w-full grow flex-col overflow-hidden bg-background px-8 sm:rounded-md sm:border sm:px-12">
@@ -76,10 +64,7 @@ export function PromptForm({
               variant="outline"
               size="icon"
               className="absolute left-0 top-[14px] size-8 rounded-full bg-background p-0 sm:left-4"
-              onClick={() => {
-                setMessages([])
-                router.push('/new')
-              }}
+              onClick={() => router.push('/new')}
             >
               <IconPlus />
               <span className="sr-only">New Chat</span>
@@ -100,13 +85,18 @@ export function PromptForm({
           name="message"
           rows={1}
           value={input}
-          onChange={e => setInput(e.target.value)}
+          onChange={handleInputChange}
+          disabled={isLoading}
         />
         <div className="absolute right-0 top-[13px] flex gap-2 sm:right-4">
           <FileUpload />
           <Tooltip>
             <TooltipTrigger asChild>
-              <Button type="submit" size="icon" disabled={input === ''}>
+              <Button 
+                type="submit" 
+                size="icon" 
+                disabled={input === '' || isLoading}
+              >
                 <IconArrowElbow />
                 <span className="sr-only">Send message</span>
               </Button>

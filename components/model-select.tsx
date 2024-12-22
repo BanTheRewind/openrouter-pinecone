@@ -88,7 +88,7 @@ export function ModelSelectContent() {
   return (
     <Select onValueChange={onValueChange} value={modelSlug ?? ''}>
       <SelectTrigger className="w-full bg-background rounded-lg">
-        <SelectValue placeholder="Select a model" />
+        <SelectValue placeholder="Choose an intelligience provider" />
       </SelectTrigger>
       <SelectContent className="w-full">
         <SelectGroup>

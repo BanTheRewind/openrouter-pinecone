@@ -1,70 +1,128 @@
 'use client'
 
-import { cn } from '@/lib/utils'
+import { useChat, type Message as VercelChatMessage } from 'ai/react'
 import { ChatList } from '@/components/chat-list'
 import { ChatPanel } from '@/components/chat-panel'
 import { EmptyScreen } from '@/components/empty-screen'
-import { useEffect, useState } from 'react'
-import { useUIState, useAIState } from 'ai/rsc'
-import { Message, Session } from '@/lib/types'
-import { usePathname, useRouter } from 'next/navigation'
+import { useState, useMemo, ChangeEvent } from 'react'
+import { Message } from '@/lib/types'
 import { useScrollAnchor } from '@/lib/hooks/use-scroll-anchor'
-import { OpenRouterKeyDialog } from '@/components/openrouter-key-dialog'
-import { useLocalStorage } from '@uidotdev/usehooks'
+import { AnimatePresence, motion } from 'framer-motion'
+import { cn } from '@/lib/utils'
+import OrbLoader from './orb-loader'
+import { TextShimmer } from './ui/text-shimmer'
 
 export interface ChatProps extends React.ComponentProps<'div'> {
   initialMessages?: Message[]
   id?: string
-  session?: Session
 }
 
-export function Chat({ id, className, session }: ChatProps) {
-  const router = useRouter()
-  const path = usePathname()
-  const [input, setInput] = useState('')
-  const [messages] = useUIState()
-  const [aiState] = useAIState()
+export function Chat({ id, className }: ChatProps) {
+  const [toolCall, setToolCall] = useState<string>()
 
-  const [_, setNewChatId] = useLocalStorage('newChatId', id)
-
-  useEffect(() => {
-    if (session?.user) {
-      if (!path.includes('chat') && messages.length === 1) {
-        window.history.replaceState({}, '', `/chat/${id}`)
-      }
+  const {
+    messages,
+    input,
+    handleInputChange: vercelHandleInputChange,
+    handleSubmit,
+    isLoading
+  } = useChat({
+    body: {
+      modelSlug: 'anthropic/claude-3.5-sonnet'
+    },
+    maxToolRoundtrips: 4,
+    onToolCall({ toolCall }) {
+      setToolCall(toolCall.toolName)
+    },
+    onFinish() {
+      setToolCall(undefined)
     }
-  }, [id, path, session?.user, messages])
-
-  useEffect(() => {
-    const messagesLength = aiState.messages?.length
-    if (messagesLength === 2) {
-      router.refresh()
-    }
-  }, [aiState.messages, router])
-
-  useEffect(() => {
-    setNewChatId(id ?? '')
   })
+
+  const handleInputChange = (
+    e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+  ) => {
+    vercelHandleInputChange(e as ChangeEvent<HTMLInputElement>)
+  }
 
   const { messagesRef, scrollRef, visibilityRef, isAtBottom, scrollToBottom } =
     useScrollAnchor()
 
+  const currentToolCall = useMemo(() => {
+    const tools = messages?.slice(-1)[0]?.toolInvocations
+    if (tools && toolCall === tools[0].toolName) {
+      return tools[0].toolName
+    }
+    return undefined
+  }, [toolCall, messages])
+
+  const awaitingResponse = useMemo(() => {
+    if (isLoading) {
+      if (messages.slice(-1)[0]?.role === 'user') {
+        return true
+      }
+      if (messages.slice(-1)[0]?.role === 'assistant' && !messages.slice(-1)[0]?.content) {
+        return true
+      }
+    }
+    return false
+  }, [isLoading, messages])
+
+  const displayMessages = useMemo(() => {
+    return messages.filter(
+      message =>
+        !(
+          message.role === 'assistant' &&
+          !message.content &&
+          message.toolInvocations
+        )
+    )
+  }, [messages])
+
   return (
     <div
-      className="group w-full overflow-auto pl-0 peer-[[data-state=open]]:lg:pl-[250px] peer-[[data-state=open]]:xl:pl-[300px]"
+      className={cn('group w-full overflow-auto', className)}
       ref={scrollRef}
     >
-      <div
-        className={cn('pb-[250px] pt-4 md:pt-10', className)}
-        ref={messagesRef}
-      >
-        {messages.length ? <ChatList messages={messages} /> : <EmptyScreen />}
+      <div className="pb-[200px] pt-4 md:pt-10" ref={messagesRef}>
+        {displayMessages.length ? (
+          <>
+            <ChatList messages={displayMessages} />
+            <AnimatePresence mode="wait">
+              {(awaitingResponse || currentToolCall) && (
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  className="relative mx-auto max-w-2xl px-4"
+                >
+                  <div className="flex items-center gap-2 py-4">
+                    <OrbLoader />
+                    <TextShimmer className="text-sm">
+                      {currentToolCall === 'searchDocuments'
+                        ? 'Searching documents...'
+                        : currentToolCall 
+                          ? 'Thinking...'
+                          : messages.slice(-1)[0]?.role === 'user'
+                            ? 'Thinking...'
+                            : 'Generating response...'}
+                    </TextShimmer>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </>
+        ) : (
+          <EmptyScreen />
+        )}
         <div className="w-full h-px" ref={visibilityRef} />
       </div>
       <ChatPanel
         id={id}
         input={input}
-        setInput={setInput}
+        handleInputChange={handleInputChange}
+        handleSubmit={handleSubmit}
+        isLoading={isLoading}
         isAtBottom={isAtBottom}
         scrollToBottom={scrollToBottom}
       />

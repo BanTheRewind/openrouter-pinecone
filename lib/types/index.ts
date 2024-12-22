@@ -1,6 +1,6 @@
-import { MessageBase } from './ai'
+import { Message as AIMessage } from 'ai'
 
-export type Message = MessageBase & {
+export interface Message extends AIMessage {
   id: string
 }
 
